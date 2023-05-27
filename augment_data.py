@@ -45,7 +45,7 @@ def cropImage(PATH):
   cropped_img = img[min_y:max_y, min_x:max_x].copy()
   return cropped_img
 
-def generate_inpainted_images(image_path, seg_model, inpainting_model):
+def RegionInpaintAugmentation(image_path, seg_model, inpainting_model):
   """
   :param image_path: A tumor image path to be augmented by removing the tumor from the image
   :param seg_model: Segmentation model
@@ -103,7 +103,7 @@ def generate_inpainted_images(image_path, seg_model, inpainting_model):
 
   return inpainting_result
 
-def generate_cutoff_images(tumor_file_path,no_tumor_file_path,seg_model):
+def CutoffAugmentation(tumor_file_path,no_tumor_file_path,seg_model):
   """
    :param tumor_file_path: A tumor image path
    :param no_tumor_file_path: A non-tumor image path
@@ -120,14 +120,14 @@ def generate_cutoff_images(tumor_file_path,no_tumor_file_path,seg_model):
   non_tumor_img = non_tumor_img / 255.0
 
   fontdict = {'fontsize': 18}
-  plt.figure(figsize=(10, 10))
-  plt.subplot(2, 2, 1)
+  plt.figure(figsize=(15, 10))
+  plt.subplot(2, 3, 1)
   plt.xticks([])
   plt.yticks([])
   plt.title('Tumor image', fontdict=fontdict)
   plt.imshow(tumor_img)
 
-  plt.subplot(2, 2, 2)
+  plt.subplot(2, 3, 2) 
   plt.xticks([])
   plt.yticks([])
   plt.title('Non Tumor image', fontdict=fontdict)
@@ -140,19 +140,25 @@ def generate_cutoff_images(tumor_file_path,no_tumor_file_path,seg_model):
   thresh = cv2.dilate(thresh, None, iterations=5)
   thresh = cv2.erode(thresh, None, iterations=5)
 
-  plt.subplot(2, 2, 3)
+  plt.subplot(2, 3, 3)  
   plt.xticks([])
   plt.yticks([])
   plt.title('Predicted mask', fontdict=fontdict)
   plt.imshow(thresh, vmin=0, vmax=255, cmap="gray")
 
   x1, x2 = np.where(thresh == 255)
+  segmented_tumor = np.zeros((256, 256, 3))   
+  segmented_tumor[x1, x2, :] = tumor_img[x1, x2, :] 
+  plt.subplot(2, 3, 4)  
+  plt.xticks([]) 
+  plt.yticks([])  
+  plt.title('Segmented Tumor', fontdict=fontdict)  
+  plt.imshow(segmented_tumor) 
 
   non_tumor_img[x1, x2, :] = tumor_img[x1, x2, :]
   cutoff_image = non_tumor_img.copy()
-
   blurred_img = cv2.GaussianBlur(cutoff_image, (3, 3), 0)
-  plt.subplot(2, 2, 4)
+  plt.subplot(2, 3, 5)
   plt.xticks([])
   plt.yticks([])
   plt.title('Augmented Image', fontdict=fontdict)
@@ -167,7 +173,6 @@ def MixUpGenerator(X1,X2,y1,y2,alpha=1):
   l = None
   while True:
     l = np.random.beta(alpha, alpha, 1)
-    print(l)
     if l[0] > 0.3 and l[0] < 0.7:
       continue
     else:
@@ -181,33 +186,33 @@ def MixUpGenerator(X1,X2,y1,y2,alpha=1):
   return X[0], y[0]
 
 
-def MixUpAugmentation(yes_path, no_path, seg_model):
+def RegionMixAugmentation(tumor_file_path,no_tumor_file_path, seg_model):
 
-  yes_img = cropImage(yes_path)
-  no_img = cropImage(no_path)
+  tumor_img = cropImage(tumor_file_path)
+  non_tumor_img = cropImage(no_tumor_file_path)
 
-  yes_img = cv2.resize(yes_img, (256, 256))
-  yes_img = yes_img / 255.0
+  tumor_img = cv2.resize(tumor_img , (256, 256))
+  tumor_img = tumor_img / 255.0
 
-  no_img = cv2.resize(no_img, (256, 256))
-  no_img = no_img / 255.0
+  non_tumor_img = cv2.resize(non_tumor_img , (256, 256))
+  non_tumor_img = non_tumor_img / 255.0
 
   fontdict = {'fontsize': 18}
-  plt.figure(figsize=(12, 12))
+  plt.figure(figsize=(15, 10))
   plt.subplot(2, 3, 1)
   plt.xticks([])
   plt.yticks([])
   plt.title('Tumor image', fontdict=fontdict)
-  plt.imshow(yes_img)
+  plt.imshow(tumor_img)
 
   plt.subplot(2, 3, 2)
   plt.xticks([])
   plt.yticks([])
   plt.title('Non Tumor image', fontdict=fontdict)
-  plt.imshow(no_img)
+  plt.imshow(non_tumor_img)
 
 
-  predicted = seg_model.predict(np.reshape(yes_img, (1, 256, 256, 3)))
+  predicted = seg_model.predict(np.reshape(tumor_img, (1, 256, 256, 3)))
   predicted = np.reshape(predicted, (256, 256))
   predicted = predicted.astype(np.float32) * 255
   _, thresh = cv2.threshold(predicted, 127, 255, cv2.THRESH_BINARY)
@@ -222,7 +227,7 @@ def MixUpAugmentation(yes_path, no_path, seg_model):
 
   x1, x2 = np.where(thresh == 255)
   segmented_tumor = np.zeros((256, 256, 3))
-  segmented_tumor[x1, x2, :] = yes_img[x1, x2, :]
+  segmented_tumor[x1, x2, :] = tumor_img[x1, x2, :]
 
   plt.subplot(2, 3, 4)
   plt.xticks([])
@@ -230,15 +235,16 @@ def MixUpAugmentation(yes_path, no_path, seg_model):
   plt.title('Segmented tumor', fontdict=fontdict)
   plt.imshow(segmented_tumor)
 
-  mixed_img, Y = MixUpGenerator(segmented_tumor, no_img, [1, 0], [0, 1])
+  mixed_img, Y = MixUpGenerator(segmented_tumor, non_tumor_img, [1, 0], [0, 1])
 
-  no_img[x1, x2, :] = mixed_img[x1, x2, :]
+  non_tumor_img[x1, x2, :] = mixed_img[x1, x2, :]
+  mixed_img= non_tumor_img.copy()
   plt.subplot(2, 3, 5)
   plt.xticks([])
   plt.yticks([])
-  plt.xlabel("Label= {}".format(Y))
+  plt.xlabel("Label= {}".format(Y),fontsize=12)
   plt.title('Augmented Image', fontdict=fontdict)
-  plt.imshow(no_img)   #mixed_img
+  plt.imshow(mixed_img)   #mixed_img
   plt.show()
 
   #plt.xticks([])
@@ -246,7 +252,7 @@ def MixUpAugmentation(yes_path, no_path, seg_model):
   #plt.imshow(scipy.ndimage.rotate(mixed_img, -27, reshape=False, order=0))
   #plt.show()
 
-def generate_augmented_images_through_path(file_path,num_samples,save_path):
+def generate_basic_augmented_images_through_path(file_path,num_samples,save_path):
   if os.path.exists(save_path)==False:
     os.makedirs(save_path)
   datagen = ImageDataGenerator(
@@ -257,6 +263,7 @@ def generate_augmented_images_through_path(file_path,num_samples,save_path):
         fill_mode='nearest')
   all_images=[]
   files=[]
+  fontdict = {'fontsize': 18}
   for file in os.listdir(file_path):
 
     img = cv2.imread(file_path + '/' + file)
@@ -269,29 +276,35 @@ def generate_augmented_images_through_path(file_path,num_samples,save_path):
     rand_img=all_images[rand_img_index]
     rand_filename=files[rand_img_index]
     save_prefix=rand_filename.split('.')[0]+'_aug'
-
-    plt.title("Original image")
+    plt.figure(figsize=(10, 10))
+    plt.subplot(num_samples, 2, (i*2)+1)
+    #plt.subplot(1, 2, 1)
+    plt.title("Original image",fontdict=fontdict)
+    plt.axis('off')
     plt.imshow(rand_img)
-    plt.show()
+    plt.axis('off')
+    #plt.show()
     rand_img=np.expand_dims(rand_img,0)
     augmented_samples_per_image=0
-
     for batch in datagen.flow(rand_img, batch_size=1,
                           save_to_dir= save_path,
                           save_prefix=save_prefix,
                           save_format='jpg'):
       augmented_img=batch[0].astype('uint8')
-      plt.title("Augmented image")
+      plt.subplot(num_samples, 2, (i*2)+2)
+      #plt.subplot(1, 2, 2)
+      plt.title("Augmented image",fontdict=fontdict)
       plt.imshow(augmented_img)
+      plt.axis('off')
       plt.show()
       augmented_samples_per_image=augmented_samples_per_image+1
       if augmented_samples_per_image==1:
         break
     i += 1
-    if i > num_samples:
+    if i > num_samples-1:
       break
 
-def generate_augmented_images(data,num_samples,save_path):
+def generate_basic_augmented_images(data,num_samples,save_path):
   if os.path.exists(save_path)==False:
     os.makedirs(save_path)
   datagen = ImageDataGenerator(
