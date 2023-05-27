@@ -62,7 +62,7 @@ Some sample input images along with their corresponding segmentation masks obtai
 <p align="center">
   <img src="images/RegionInpaint_predictions.png" width=40% height=40%>
  </p>
-This GIF image also shows some examples for RegionInpaint Augmentation
+This GIF also shows some examples for RegionInpaint Augmentation
 <p align="center">
   <img src="images/RegionInpaint_GIF.gif" width=80% height=80%>
  </p>
