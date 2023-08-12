@@ -63,7 +63,11 @@ Some sample input images along with their corresponding segmentation masks obtai
 <p align="center">
   <img src="images/RegionInpaint_predictions.png" width=40% height=40%>
  </p>
-
+This GIF also shows some examples for RegionInpaint Augmentation
+<p align="center">
+  <img src="images/RegionInpaint_GIF.gif" width=80% height=80%>
+ </p>
+ 
 ## Cutoff Augmentation.
 
 The proposed Cutoff augmentation approach is based on randomly selecting two images, one from the “tumor class” and the other from the “non-tumor class”. This figure illustrates the steps for applying this augmentation technique. The first step is applying segmentation on the tumor image to obtain its corresponding mask where the white pixels in the predicted mask represents the tumor region. Afterwards, a set of dilations and erosions are applied to the predicted mask to fill any small holes that may result due to the segmentation step. The predicted mask is then superimposed with the original image to obtain the segmented tumor. This segmented tumor is copied to the non-tumor image to obtain a new augmented image. Hence, by this augmentation approach we are able to increase the number of images in the “tumor class”. Finally, Gaussian blur filter is applied on the resulting image and thus enabling the copied tumor to blend with the background. Moreover, different transformations are applied such as rotation, flipping, adjusting brightness and darkness in order to make the tumor in the resulting image look different from the tumor in the original image and accordingly increasing the variety of the training samples. 
