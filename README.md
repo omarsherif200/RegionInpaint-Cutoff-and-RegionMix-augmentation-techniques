@@ -90,3 +90,15 @@ If you have any question, please email `omarsherif0200@gmail.com` or `omarsherif
 
 ## License
 This project is released under the MIT license. Please see the [LICENSE](License) file for more information.
+
+## Citation
+Please consider citing our paper if you find it useful in your research
+```
+@article{el2023regioninpaint,
+  title={RegionInpaint, Cutoff and RegionMix: Introducing Novel Augmentation Techniques for Enhancing the Generalization of Brain Tumor Identification.},
+  author={El-Assiouti, Omar S and Hamed, Ghada and El-Saadawy, Hadeer and Ebied, Hala M and Khattab, Dina},
+  journal={IEEE Access},
+  year={2023},
+  publisher={IEEE}
+}
+```
