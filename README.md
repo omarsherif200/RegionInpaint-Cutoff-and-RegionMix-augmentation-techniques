@@ -1,5 +1,7 @@
 # RegionInpaint, Cutoff and RegionMix: Introducing novel augmentation techniques for enhancing the generalization of brain tumor identification.
 
+This repository is the official implementation of the paper [RegionInpaint, Cutoff and RegionMix](https://ieeexplore.ieee.org/document/10208216).
+
 ## Abstract
 Introducing novel augmentation techniques named RegionInpaint, Cutoff and RegionMix augmentation techniques for enhancing the generalization of brain tumors classification.
 
